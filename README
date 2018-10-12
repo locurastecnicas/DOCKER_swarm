@@ -1,0 +1,4 @@
+Este repositorio contiene todos los scripts, configuraciones y playbooks de Ansible necesarios para desplegar un swarm de Docker.
+
+-La configuracion se realiza sobre un grupo de 4 nodos virtuales con 2 tarjetas de red.
+
