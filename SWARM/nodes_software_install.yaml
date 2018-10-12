@@ -1,0 +1,28 @@
+## Este playbook instala Docker CE en todos los nodos y crea un swarm con ellos, seleccionando
+## uno de los nodos como master y el resto como workers.
+
+---
+- hosts: nodos
+  gather_facts: no
+
+  tasks:
+    - name: Instala las dependecias de Docker CE recomendadas en la web de Docker.
+      yum:
+        name: 
+          - yum-utils
+          - device-mapper-persistent-data
+          - lvm2
+        state: latest
+        enablerepo: "extras"
+    - name: Incluir el repositorio de docker.    
+      yum_repository:
+        state: present
+        name: Docker-CE
+        description: "Docker CE Stable - x86_64"
+        baseurl: https://download.docker.com/linux/centos/docker-ce.repo
+    - name: Instala el paquete de Docker en todos los nodos.
+      yum:
+        name: docker-ce
+        state: latest
+
+...

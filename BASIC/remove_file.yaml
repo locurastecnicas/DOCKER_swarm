@@ -1,0 +1,15 @@
+## Este playbook solo borrar un fichero en los hosts remotos. Lo has hecho porque en el playbook init_basic_config.yaml
+## inicialmente el fichero que copias a /etc/sudoers.d lo llamabas ansible.sudo y ese nombre de fichero no es valido.
+## Al parecer los ficheros dentro del directorio /etc/sudoers.d no pueden tener el caracter . en su nombre.
+
+---
+- hosts: nodos
+  gather_facts: no
+
+  tasks:
+  - name: Borra un fichero remoto.
+    file:
+     path: /etc/sysconfig/network-scripts/ifcfg-ens33
+     state: absent
+
+... 
