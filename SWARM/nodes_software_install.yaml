@@ -3,7 +3,7 @@
 
 ---
 - hosts: nodos
-  gather_facts: no
+  gather_facts: yes
 
   tasks:
     - name: Instala las dependecias de Docker CE recomendadas en la web de Docker.
@@ -15,14 +15,34 @@
         state: latest
         enablerepo: "extras"
     - name: Incluir el repositorio de docker.    
-      yum_repository:
-        state: present
-        name: Docker-CE
-        description: "Docker CE Stable - x86_64"
-        baseurl: https://download.docker.com/linux/centos/docker-ce.repo
+      command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
     - name: Instala el paquete de Docker en todos los nodos.
       yum:
         name: docker-ce
         state: latest
+    - name: Habilita el servicio Docker.
+      service:
+        name: docker
+        state: started
+        enabled: no
+    - name: Creacion del swarm.
+      command: docker swarm init --advertise-addr {{ network_interface_cluster }} --data-path-addr {{ network_interface_service }}
+      register: manager_output
+      run_once: true
+    - name: Pausamos el playbook.
+      pause:
+        seconds: 10
+    - name: Registro el comando a usar en el resto de hosts.
+      set_fact:
+        join_command={{ item }}
+      when: ( item is search ("--toke") )
+      with_items:
+        - "{{ manager_output.stdout_lines }}"
+    - name: Unir nodos al swarm excluyendo el manager.
+      command: "{{ join_command }}"
+      when: ( hostvars[inventory_hostname]['ansible_' + item]['ipv4']['network'] == network_cluster and not ( join_command | regex_search( hostvars[inventory_hostname]['ansible_' + item]['ipv4']['address'] ) ) )
+      with_items:
+        - "{{ hostvars[inventory_hostname]['ansible_interfaces'] }}"
 
+      
 ...
