@@ -36,12 +36,12 @@
       setup:
         gather_subset: network
     - name: Cambiar nombre de interfaz de red de cluster.
-      command: ip link set {{ item }} name CLUSTER
+      command: ip link set {{ item }} name {{ network_interface_cluster }}
       when: ( hostvars[inventory_hostname]['ansible_' + item]['active'] == false )
       with_items:
         - "{{ hostvars[inventory_hostname]['ansible_interfaces'] }}"
     - name: Levantar el nuevo interfaz de la red de CLUSTER.
-      command: ip link set up CLUSTER
+      command: ip link set up {{ network_interface_cluster }}
     - name: Refrescar estado de facts de red.
       setup:
         gather_subset: network
