@@ -2,18 +2,60 @@
 ## uno de los nodos como master y el resto como workers.
 
 ---
-- hosts: nodos
+- hosts: swarm
   gather_facts: yes
 
   tasks:
-    - name: Instala las dependecias de Docker CE recomendadas en la web de Docker.
+    - name: Refrescar cache de paquetes.
+      yum:
+        name: '*'
+        state: latest
+        update_cache: yes
+    - name: Actualizar paquetes si es necesario.
+      yum:
+        name: '*'
+        state: latest
+    - name: Instala las dependecias de Docker CE recomendadas en la web de Docker y paquetes adicionales.
       yum:
         name: 
           - yum-utils
           - device-mapper-persistent-data
           - lvm2
+          - python-firewall
         state: latest
         enablerepo: "extras"
+    - name: Configuracion de firewalld. Incluir interfaces en zona trusted.
+      firewalld:
+        zone: trusted
+        interface: "{{ item }}"
+        permanent: true
+        state: enabled
+      loop:
+        - "{{ network_interface_cluster }}"
+        - "{{ network_interface_service }}"
+    - name: Configuracion de firewalld. Incluimos las redes en la zona trusted.
+      firewalld:
+        zone: trusted
+        source: "{{ item }}"
+        permanent: true
+        state: enabled
+      loop:
+        - "{{ network_cluster_cidr }}"
+        - "{{ network_service_cidr }}"
+    - name: Configuracion de firewalld. Incluimos los puertos necesarios para swarm en la zona trusted.
+      firewalld:
+        zone: trusted
+        port: "{{ item }}"
+        permanent: true
+        state: enabled
+      loop:
+        - 2376/tcp
+        - 2377/tcp
+        - 7946/tcp
+        - 4789/udp
+        - 7946/udp
+    - name: Recargar reglas de firewalld.
+      command: firewall-cmd --reload
     - name: Incluir el repositorio de docker.    
       command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
     - name: Instala el paquete de Docker en todos los nodos.
@@ -29,13 +71,6 @@
       command: docker swarm init --advertise-addr {{ network_interface_cluster }} --data-path-addr {{ network_interface_service }}
       register: manager_output
       run_once: true
-    - name: Configuracion necesaria del firewall para el swarm.
-      firewalld:
-        zone: trusted
-        interface: "{{ network_interface_cluster }}"
-        permanent: true
-        immediate: true
-        state: enabled
     - name: Registro el comando a usar en el resto de hosts.
       set_fact:
         join_command={{ item }}
@@ -47,6 +82,5 @@
       when: ( hostvars[inventory_hostname]['ansible_' + item]['ipv4']['network'] == network_cluster and not ( join_command | regex_search( hostvars[inventory_hostname]['ansible_' + item]['ipv4']['address'] ) ) )
       with_items:
         - "{{ hostvars[inventory_hostname]['ansible_interfaces'] }}"
-
       
 ...

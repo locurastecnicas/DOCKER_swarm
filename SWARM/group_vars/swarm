@@ -3,13 +3,13 @@ ansible_connection: ssh
 
 sudo_user: ansible
 network_interface_cluster: CLUSTER
-network_cluster: 192.168.136.0
-network_cluster_cidr: 192.168.136.0/24
+network_cluster: 192.168.111.0
+network_cluster_cidr: 192.168.111.0/24
 network_interface_service: SERVICIO
 network_service: 192.168.241.0
 network_service_cidr: 192.168.241.0/24
 network_default_gw: 192.168.241.2
-network_cluster_gw: 192.168.136.2
+network_cluster_gw: 192.168.111.2
 name_server_primary: 8.8.8.8
 name_server_secondary: 8.8.4.4
-node_name_prefix: k8-nodo
+node_name_prefix: swarm-node
