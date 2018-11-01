@@ -56,6 +56,9 @@
         - 7946/udp
     - name: Recargar reglas de firewalld.
       command: firewall-cmd --reload
+    - name: Pausamos durante 10 segundos.
+      pause:
+        seconds: 10
     - name: Incluir el repositorio de docker.    
       command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
     - name: Instala el paquete de Docker en todos los nodos.
@@ -68,17 +71,23 @@
         state: started
         enabled: yes
     - name: Creacion del swarm.
-      command: docker swarm init --advertise-addr {{ network_interface_cluster }} --data-path-addr {{ network_interface_service }}
+      command: docker swarm init --listen-addr {{ network_interface_cluster }} --advertise-addr {{ network_interface_cluster }} --data-path-addr {{ network_interface_service }}
       register: manager_output
       run_once: true
+    - name: Pausamos durante 10 segundos.
+      pause:
+        seconds: 10
     - name: Registro el comando a usar en el resto de hosts.
       set_fact:
         join_command={{ item }}
       when: ( item is search ("--toke") )
       with_items:
         - "{{ manager_output.stdout_lines }}"
+    - name: Construyo el comando join incluyendo los nombres de los interfaces de escucha correctos.
+      set_fact:
+         join_command_complete="docker swarm join --listen-addr {{ network_interface_cluster }} --advertise-addr {{ network_interface_cluster }} --data-path-addr {{ network_interface_service }} {{ join_command | regex_replace('docker swarm join', '') }}"
     - name: Unir nodos al swarm excluyendo el manager.
-      command: "{{ join_command }}"
+      command: "{{ join_command_complete }}"
       when: ( hostvars[inventory_hostname]['ansible_' + item]['ipv4']['network'] == network_cluster and not ( join_command | regex_search( hostvars[inventory_hostname]['ansible_' + item]['ipv4']['address'] ) ) )
       with_items:
         - "{{ hostvars[inventory_hostname]['ansible_interfaces'] }}"
