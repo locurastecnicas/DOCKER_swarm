@@ -1,7 +1,7 @@
 ## Este playbook realiza la configuracion inicial descrita en el fichero txt Video 1 - Configuracion inicial de nodos.
 
 ---
-- hosts: swarm
+- hosts: "{{ hostsgroup }}"
   gather_facts: no
   
   tasks:

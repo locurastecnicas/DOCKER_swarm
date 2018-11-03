@@ -4,7 +4,7 @@
 ## de los dispositivos de red, cambia el nombre de los hosts y deshabilita NetworkManager. 
 
 ---
-- hosts: swarm
+- hosts: "{{ hostsgroup }}"
   gather_facts: yes
 
   tasks:

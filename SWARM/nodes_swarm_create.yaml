@@ -2,7 +2,7 @@
 ## uno de los nodos como master y el resto como workers.
 
 ---
-- hosts: swarm
+- hosts: "{{ hostsgroup }}"
   gather_facts: yes
 
   tasks:
