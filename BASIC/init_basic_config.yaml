@@ -23,5 +23,17 @@
         state: present
         manage_dir: yes
         key: "{{ lookup('file', '/home/ansible/.ssh/id_rsa.pub') }}"
+    - name: Obtener configuracion de red del nodo.
+      setup:
+        gather_subset: network
+    - name: Configuracion del archivo /etc/hosts del nodo.
+      lineinfile:
+        backup: yes
+        path: /etc/hosts
+        state: present
+        line: "{{ hostvars[inventory_hostname]['ansible_' + item]['ipv4']['address'] }} {{ inventory_hostname }}"
+      when: ( hostvars[inventory_hostname]['ansible_' + item]['active'] == true and hostvars[inventory_hostname]['ansible_' + item]['ipv4'] is defined and hostvars[inventory_hostname]['ansible_' + item]['ipv4']['network'] == network_service )
+      with_items:
+        - "{{ hostvars[inventory_hostname]['ansible_interfaces'] }}"
 
 ...
